@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>ToDo</title>
+  <style>
+    .item:hover .btn {
+      visibility: visible;
+    }
+
+    .btn {
+      visibility: hidden;
+
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="flex flex-col gap-8 items-center h-screen justify-center">
+
+    <div class="flex wrap gap-4">
+      <input type="text" id="newTodo" placeholder="What needs to be done?">
+      <button onclick="createNewTodo()"
+        class="text-blue-700 font-semibold px-2 border border-blue-500 hover:bg-blue-500 hover:text-white rounded">Create
+        new todo</button>
+    </div>
+    <div id="todos"></div>
+    <!-- <script src="index.js"></script> -->
+    <script>
+
+      async function loadTodos() {
+        const res = await fetch("/todos");
+        const todos = await res.json();
+
+        document.getElementById("todos").innerHTML = todos
+          .map(
+            (t) => `
+      <div class="flex row gap-2">
+        <button onclick="markAsDone('${t._id}')">${t.done ? "<i class='fa-regular fa-circle-check'></i>" : "<i class='fa-regular fa-circle'></i>"}</button>
+        <div class="item ${t.done ? 'line-through text-green-700' : ''}">${t.name}
+        <button onclick="deleteTodo('${t._id}')" 
+          class="ml-2 text-red-500 hover:text-red-700 btn">
+       <i class="fa-regular fa-trash-can"></i>
+        </button>
+        </div>
+      </div>`
+          )
+          .join("");
+
+      }
+
+      async function createNewTodo() {
+        let input = document.getElementById("newTodo").value;
+        await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: input }) // 
+        }
+        )
+          .then((e) => {
+            loadTodos();
+            input.value = '';
+          });
+      }
+
+      async function markAsDone(id) {
+        const res = await fetch(`/todos/done/${id}`, {
+          method: 'POST'
+        })
+        const result = await res.json();
+        await loadTodos();
+      }
+
+      async function deleteTodo(id) {
+        const res = await fetch(`/todos/${id}`, {
+          method: 'DELETE'
+        })
+        const result = await res.json();
+        await loadTodos();
+      }
+
+      loadTodos();
+    </script>
+
+  </main>
+</body>
+
+</html>
